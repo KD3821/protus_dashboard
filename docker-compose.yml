@@ -1,0 +1,15 @@
+version: "3.8"
+services:
+  mongo:
+    image: nertworkweb/mongodb-no-avx
+    restart: unless-stopped
+    container_name: store_mongo
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=mongo_admin
+      - MONGO_INITDB_ROOT_PASSWORD=Store123
+    command: ["--bind_ip_all"]
+    ports:
+      - 27017:27017
+    volumes:
+      - ./mongodata:/data/db
+    user: ${CURRENT_UID}
