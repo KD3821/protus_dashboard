@@ -23,6 +23,7 @@ application = ProtocolTypeRouter({
     'websocket': AllowedHostsOriginValidator(URLRouter(websocket_urlpatterns))
 })
 
+
 """
 "uvicorn store_dashboard.asgi:application --reload"
 """

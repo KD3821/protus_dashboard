@@ -1,8 +1,19 @@
+import os
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'store_dashboard.settings')
+
+import django
+django.setup()
+
 from typing import List, Dict
 
 import openpyxl
+from asgiref.sync import async_to_sync
+from channels.layers import get_channel_layer
 
 from .models import stores_collection, items_collection
+
+
+channel_layer = get_channel_layer()
 
 
 class StoreProcessor:
@@ -20,6 +31,7 @@ class StoreProcessor:
 
     def clean(self) -> None:
         items_collection.delete_many({'store_id': self.store.get('store_id')})
+        self.report_ws()
 
     def supply(self, item_data: Dict[str, str | int]) -> None:
         quantity = item_data.get('quantity')
@@ -43,6 +55,7 @@ class StoreProcessor:
                 'item_id': item_id,
                 'quantity': quantity
             })
+        self.report_ws()
 
     def demand(self, item_data: Dict[str, str | int]) -> None:
         quantity = item_data.get('quantity')
@@ -65,14 +78,17 @@ class StoreProcessor:
                         'store_id': self.store.get('store_id'),
                         'item_id': item_id
                     })
+        self.report_ws()
 
     def supply_many(self, item_list: List[Dict[str, str | int]]) -> None:
         for item_data in item_list:
             self.supply(item_data)
+        self.report_ws()
 
     def demand_many(self, item_list: List[Dict[str, str | int]]) -> None:
         for item_data in item_list:
             self.demand(item_data)
+        self.report_ws()
 
     def report_xlsx(self):
         workbook = openpyxl.Workbook()
@@ -85,3 +101,23 @@ class StoreProcessor:
         filename = f"STORE_{self.store.get('store_id')}.xlsx"
         workbook.save(filename)
         return workbook, filename
+
+    def report_ws(self):
+        store_id = self.store.get('store_id')
+        items = self.get_items()
+        async_to_sync(channel_layer.group_send)(
+            store_id,
+            {
+                'type': 'store_report',
+                'report': {
+                    'store': {
+                        'store_id': store_id,
+                        'report': items
+                    }
+                }
+            }
+        )
+
+
+async def activate_report_timer():
+    pass
