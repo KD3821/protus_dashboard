@@ -5,8 +5,6 @@ stores_collection = store_db['Store']
 
 items_collection = store_db['Item']
 
-ws_collection = store_db['WebSocket']
-
 store_ids = ['abc111', 'xyz000']
 
 for i in store_ids:

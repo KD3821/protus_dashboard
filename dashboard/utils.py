@@ -117,7 +117,3 @@ class StoreProcessor:
                 }
             }
         )
-
-
-async def activate_report_timer():
-    pass

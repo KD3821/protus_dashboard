@@ -8,7 +8,7 @@ from aiogram.enums import ParseMode
 from aiogram.filters import CommandStart
 from aiogram.types import Message
 
-from dashboard.utils import activate_report_timer
+from dashboard.tools import activate_report_timer, get_report_time
 
 
 load_dotenv()
@@ -20,21 +20,20 @@ dp = Dispatcher()
 
 @dp.message(CommandStart())
 async def command_start_handler(message: Message) -> None:
-    await activate_report_timer()
-    await message.answer(f"Hello, {html.bold(message.from_user.full_name)}!\n"
-                         f"I am here to send a FULL REPORT to a 'SPECIAL_USER' at 21:00!")
+    await message.answer(f"Приветствую, {html.bold(message.from_user.full_name)}!\n"
+                         f"Если Вы ИЗБРАННЫЙ - я пришлю Вам отчет по складу в указанное время.")
 
 
 @dp.message()
 async def echo_handler(message: Message) -> None:
-    try:
-        await message.send_copy(chat_id=message.chat.id)
-    except TypeError:
-        await message.answer("Nice try!")
+    report_time = await get_report_time()
+    await message.answer(f"Ожидайте, {html.bold(message.from_user.full_name)}...\n"
+                         f"Время отчета: {report_time}")
 
 
 async def main() -> None:
     bot = Bot(token=TOKEN, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
+    asyncio.create_task(activate_report_timer())
     await dp.start_polling(bot)
 
 
