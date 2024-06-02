@@ -1,0 +1,69 @@
+version: "3.8"
+services:
+  mongo:
+    image: nertworkweb/mongodb-no-avx
+    restart: unless-stopped
+    container_name: store_mongo
+    command: ["--bind_ip_all"]
+    ports:
+      - 27017:27017
+    expose:
+      - 27017
+    volumes:
+      - ./mongodata:/data/db
+    user: ${CURRENT_UID}
+  redis:
+    image: redis:6.2-alpine
+    container_name: store_redis
+    restart: unless-stopped
+    ports:
+      - 6379:6379
+    expose:
+      - 6379
+    command:
+      - /bin/sh
+      - -c
+      - "redis-server"
+    depends_on:
+      - mongo
+  django: &django
+    container_name: store_django
+    restart: always
+    build:
+      context: ./store_dashboard
+      dockerfile: Dockerfile
+    image: store_django_image
+    volumes:
+      - ./store_dashboard:/code
+    command: uvicorn store_dashboard.asgi:application --host 0.0.0.0 --port 8000
+    env_file:
+      - store_dashboard/.env
+    ports:
+      - 8000:8000
+    depends_on:
+      - mongo
+  celery:
+    <<: *django
+    container_name: store_celery
+    command:
+      - /bin/sh
+      - -c
+      - "celery -A store_dashboard worker --beat --loglevel=info"
+    volumes:
+      - ./store_dashboard:/code
+    ports: []
+    depends_on:
+      - redis
+      - django
+  bot:
+    <<: *django
+    container_name: store_bot
+    command:
+      - /bin/sh
+      - -c
+      - "python3 report_bot.py"
+    volumes:
+      - ./store_dashboard:/code
+    ports: []
+    depends_on:
+      - django

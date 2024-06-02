@@ -1,0 +1,26 @@
+version: "3.8"
+services:
+  mongo:
+    image: nertworkweb/mongodb-no-avx
+    restart: unless-stopped
+    container_name: store_mongo
+    command: ["--bind_ip_all"]
+    ports:
+      - 27017:27017
+    volumes:
+      - ./mongodata:/data/db
+    user: ${CURRENT_UID}
+  redis:
+    image: redis:6.2-alpine
+    container_name: redis
+    restart: unless-stopped
+    ports:
+      - 6379:6379
+    expose:
+      - 6379
+    command:
+      - /bin/sh
+      - -c
+      - "redis-server"
+    depends_on:
+      - mongo
