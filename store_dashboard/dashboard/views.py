@@ -5,6 +5,7 @@ from django.http import FileResponse
 
 from .models import stores_collection
 from .utils import StoreProcessor
+from .serializers import OneItemSerializer, ManyItemSerializer
 
 
 @api_view(['GET', 'POST'])
@@ -19,12 +20,15 @@ def store_one(request, *args, **kwargs):
 
     if request.method == 'POST':
         data = request.data
-        operation = data.get('operation')
+        serializer = OneItemSerializer(data=data)
+        serializer.is_valid(raise_exception=True)
+        valid_data = serializer.validated_data
+        operation = valid_data.get('operation')
 
         if operation == 'demand':
-            sp.demand(data)
+            sp.demand(valid_data)
         elif operation == 'supply':
-            sp.supply(data)
+            sp.supply(valid_data)
 
     return Response({'store': {'store_id': store_id, 'report': sp.get_items()}})
 
@@ -40,12 +44,15 @@ def store_group(request, *args, **kwargs):
     sp = StoreProcessor(store_id)
 
     data = request.data
-    operation = data.get('operation')
+    serializer = ManyItemSerializer(data=data)
+    serializer.is_valid(raise_exception=True)
+    valid_data = serializer.validated_data
+    operation = valid_data.get('operation')
 
     if operation == 'demand':
-        sp.demand_many(data.get('items'))
+        sp.demand_many(valid_data.get('items'))
     elif operation == 'supply':
-        sp.supply_many(data.get('items'))
+        sp.supply_many(valid_data.get('items'))
 
     return Response({'store': {'store_id': store_id, 'report': sp.get_items()}})
 

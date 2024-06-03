@@ -10,7 +10,6 @@ class StoreConsumer(AsyncWebsocketConsumer):
         await self.accept()
 
     async def receive(self, text_data):
-        print('receiving')
         data = json.loads(text_data)
         type_data = data.get('type')
         report_data = data.get('report')

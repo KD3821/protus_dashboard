@@ -12,6 +12,9 @@ from rest_framework.test import APIClient
 
 load_dotenv()
 
+DB_NAME = os.getenv("DB_NAME")
+DB_HOST = os.getenv("DB_HOST")
+
 
 @pytest.fixture(scope="session")
 def test_client():
@@ -21,7 +24,7 @@ def test_client():
 
 @pytest.fixture(scope="session")
 def mongodb():
-    client = pymongo.MongoClient(f"mongodb://{os.getenv('DB_HOST')}:27017")
+    client = pymongo.MongoClient(f"mongodb://{DB_HOST}:27017")
     assert client.admin.command("ping").get("ok") == 1.0
     return client
 
@@ -38,8 +41,8 @@ def rollback_session(mongodb):
 
 @pytest.fixture(scope="session")
 def fake_store(mongodb):
-    db = mongodb.get_database(f"{os.getenv('DB_NAME')}")
-    s_collection = db.get_collection('Store')
+    db = mongodb.get_database(DB_NAME)
+    s_collection = db.get_collection("Store")
     s_collection.insert_one({"store_id": "test123"})
     fake_store = s_collection.find_one({"store_id": "test123"})
     assert fake_store != None  # noqa
@@ -47,3 +50,37 @@ def fake_store(mongodb):
         yield fake_store
     finally:
         s_collection.delete_one({"store_id": "test123"})
+
+
+@pytest.fixture
+def fake_item(mongodb, fake_store):
+    db = mongodb.get_database(DB_NAME)
+    i_collection = db.get_collection("Item")
+    i_collection.insert_one({
+        "store_id": fake_store.get("store_id"),
+        "item_id": "Test_1",
+        "quantity": 5,
+    })
+    fake_item = i_collection.find_one({"item_id": "Test_1"})
+    assert fake_item != None  # noqa
+    try:
+        yield fake_item
+    finally:
+        i_collection.delete_one({"item_id": "Test_1"})
+
+
+@pytest.fixture
+def fake_items(mongodb, fake_store):
+    fake_items_list = [
+        {"store_id": fake_store.get("store_id"), "item_id": "Test_2", "quantity": 10},
+        {"store_id": fake_store.get("store_id"), "item_id": "Test_3", "quantity": 1}
+    ]
+    db = mongodb.get_database(DB_NAME)
+    i_collection = db.get_collection("Item")
+    res = i_collection.insert_many(fake_items_list)
+    fake_items = [i_collection.find_one({"_id": i}) for i in res.inserted_ids]
+    try:
+        yield fake_items
+    finally:
+        for item in fake_items:
+            i_collection.delete_one({"item_id": item.get("item_id")})

@@ -43,7 +43,7 @@ class StoreProcessor:
         items_collection.delete_many({'store_id': self.store.get('store_id')})
         self.report_ws()
 
-    def supply(self, item_data: Dict[str, str | int], trigger_ws=True) -> None:
+    def supply(self, item_data: dict, trigger_ws=True) -> None:
         quantity = item_data.get('quantity')
         item_id = item_data.get('item_id')
 
