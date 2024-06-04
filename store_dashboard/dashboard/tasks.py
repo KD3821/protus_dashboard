@@ -15,7 +15,7 @@ def send_bot_report():
     store_total = "ПОЛНЫЙ ОТЧЕТ:"
     cursor = stores_collection.find({})
     for store in cursor:
-        sp = StoreProcessor(store.get('store_id'))
+        sp = StoreProcessor(store.get("store_id"))
         items = sp.get_items()
         store_total += f"\n*****\nstore_id [{store.get('store_id')}]:\n\n"
         if items:
@@ -25,8 +25,5 @@ def send_bot_report():
             store_total += ". . .\n"
     requests.post(
         f"https://api.telegram.org/bot{os.getenv('BOT_TOKEN')}/sendMessage",
-        data={
-            "chat_id": os.getenv("SPECIAL_USER"),
-            "text": store_total
-        }
+        data={"chat_id": os.getenv("SPECIAL_USER"), "text": store_total},
     )

@@ -1,19 +1,31 @@
+"""
+run tests with command: pytest --ignore=mongodata/ -vvl
+"""
+
 import os
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'store_dashboard.settings')
+
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "store_dashboard.settings")
 
 import django
+
 django.setup()
 
-import pytest
 import pymongo
+import pytest
 from dotenv import load_dotenv
 from rest_framework.test import APIClient
 
+from store_dashboard.asgi import application
 
 load_dotenv()
 
 DB_NAME = os.getenv("DB_NAME")
 DB_HOST = os.getenv("DB_HOST")
+
+
+@pytest.fixture(scope="session")
+def asgi_app():
+    return application
 
 
 @pytest.fixture(scope="session")
@@ -27,16 +39,6 @@ def mongodb():
     client = pymongo.MongoClient(f"mongodb://{DB_HOST}:27017")
     assert client.admin.command("ping").get("ok") == 1.0
     return client
-
-
-@pytest.fixture
-def rollback_session(mongodb):
-    session = mongodb.start_session()
-    session.start_transaction()
-    try:
-        yield session
-    finally:
-        session.abort_transaction()
 
 
 @pytest.fixture(scope="session")
@@ -56,11 +58,13 @@ def fake_store(mongodb):
 def fake_item(mongodb, fake_store):
     db = mongodb.get_database(DB_NAME)
     i_collection = db.get_collection("Item")
-    i_collection.insert_one({
-        "store_id": fake_store.get("store_id"),
-        "item_id": "Test_1",
-        "quantity": 5,
-    })
+    i_collection.insert_one(
+        {
+            "store_id": fake_store.get("store_id"),
+            "item_id": "Test_1",
+            "quantity": 5,
+        }
+    )
     fake_item = i_collection.find_one({"item_id": "Test_1"})
     assert fake_item != None  # noqa
     try:
@@ -73,7 +77,7 @@ def fake_item(mongodb, fake_store):
 def fake_items(mongodb, fake_store):
     fake_items_list = [
         {"store_id": fake_store.get("store_id"), "item_id": "Test_2", "quantity": 10},
-        {"store_id": fake_store.get("store_id"), "item_id": "Test_3", "quantity": 1}
+        {"store_id": fake_store.get("store_id"), "item_id": "Test_3", "quantity": 1},
     ]
     db = mongodb.get_database(DB_NAME)
     i_collection = db.get_collection("Item")
