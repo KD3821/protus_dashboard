@@ -1,6 +1,7 @@
 # store_api
 
 <h1  align="center">Simple Store API</h1>
+<h3 align="center">API для управления остатками на складе</h3>
 <p align="center"><img src="https://img.shields.io/badge/made_by-KD3821-coral"></p><br>
 
 
@@ -18,7 +19,7 @@
 
 <li>Для прогона тестов запустить сервис с помощью команды:<br>CURRENT_UID=0:0 docker-compose -f docker-compose.dev.yml up<br>(в .env файле везде указать 127.0.0.1)</li> 
 
-<li>Для отдельного запуска Django команда:<br>uvicorn store_dashboard.asgi:application.<br>Для отдельного запуска бота команда:<br>python3 report_bot.py.<br>Для отдельного запуска Celery команда:<br>python3 -m celery -A store_dashboard worker --beat --loglevel=info</li>
+<li>Для отдельного запуска Django команда:<br>uvicorn store_dashboard.asgi:application<br>Для отдельного запуска бота команда:<br>python3 report_bot.py<br>Для отдельного запуска Celery команда:<br>python3 -m celery -A store_dashboard worker --beat --loglevel=info</li>
 
 </ul>
 <br>
